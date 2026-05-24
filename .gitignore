@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Uploads (user-generated files)
+uploads/
+
+# Logs
+logs/
+*.log
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Docker volumes
+pgdata/
+redis-data/

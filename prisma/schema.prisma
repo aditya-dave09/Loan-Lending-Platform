@@ -1,0 +1,410 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum KycStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum KycDocumentType {
+  AADHAAR
+  PAN
+  PASSPORT
+  DRIVING_LICENSE
+  VOTER_ID
+}
+
+enum LoanStatus {
+  DRAFT
+  PENDING_SIGNATURES
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+  CANCELLED
+  DISPUTED
+}
+
+enum ParticipantRole {
+  LENDER
+  BORROWER
+}
+
+enum RepaymentFrequency {
+  MONTHLY
+  WEEKLY
+  BI_WEEKLY
+  QUARTERLY
+  LUMP_SUM
+}
+
+enum InstallmentStatus {
+  UPCOMING
+  DUE
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  UPI
+  BANK_TRANSFER
+  CASH
+  CHEQUE
+  OTHER
+}
+
+enum SignatureStatus {
+  OTP_SENT
+  OTP_VERIFIED
+  SIGNED
+  EXPIRED
+}
+
+enum DocumentPurpose {
+  KYC_DOCUMENT
+  AGREEMENT_PDF
+  PAYMENT_PROOF
+  IDENTITY_PHOTO
+  OTHER
+}
+
+enum NotificationType {
+  LOAN_CREATED
+  LOAN_SIGNED
+  PAYMENT_DUE
+  PAYMENT_RECEIVED
+  PAYMENT_OVERDUE
+  KYC_APPROVED
+  KYC_REJECTED
+  AGREEMENT_READY
+  SYSTEM
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SIGN
+  VERIFY
+  LOGIN
+  LOGOUT
+  UPLOAD
+  DOWNLOAD
+  STATUS_CHANGE
+}
+
+enum WebhookEvent {
+  LOAN_CREATED
+  LOAN_SIGNED
+  LOAN_ACTIVATED
+  LOAN_COMPLETED
+  PAYMENT_RECEIVED
+  PAYMENT_OVERDUE
+  KYC_VERIFIED
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  phone        String    @unique
+  passwordHash String    @map("password_hash")
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  dateOfBirth  DateTime? @map("date_of_birth")
+  address      String?
+  role         UserRole  @default(USER)
+  kycStatus    KycStatus @default(NOT_SUBMITTED) @map("kyc_status")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  kycVerification   KycVerification?
+  loanParticipants  LoanParticipant[]
+  signatures        DigitalSignature[]
+  notifications     Notification[]
+  refreshTokens     RefreshToken[]
+  uploadedDocuments Document[]
+  auditLogs         AuditLog[]        @relation("AuditActor")
+  webhookEndpoints  WebhookEndpoint[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([kycStatus])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  revoked   Boolean   @default(false)
+  revokedAt DateTime? @map("revoked_at")
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model KycVerification {
+  id              String          @id @default(uuid())
+  userId          String          @unique @map("user_id")
+  documentType    KycDocumentType @map("document_type")
+  documentNumber  String          @map("document_number")
+  documentFileId  String?         @map("document_file_id")
+  selfieFileId    String?         @map("selfie_file_id")
+  rejectionReason String?         @map("rejection_reason")
+  verifiedAt      DateTime?       @map("verified_at")
+  verifiedBy      String?         @map("verified_by")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentFile Document? @relation("KycDocument", fields: [documentFileId], references: [id])
+  selfieFile   Document? @relation("KycSelfie", fields: [selfieFileId], references: [id])
+
+  @@index([documentType, documentNumber])
+  @@map("kyc_verifications")
+}
+
+model LoanAgreement {
+  id                 String             @id @default(uuid())
+  agreementNumber    String             @unique @map("agreement_number")
+  principalAmount    Decimal            @map("principal_amount") @db.Decimal(12, 2)
+  interestRate       Decimal            @map("interest_rate") @db.Decimal(5, 2)
+  tenureMonths       Int                @map("tenure_months")
+  repaymentFrequency RepaymentFrequency @default(MONTHLY) @map("repayment_frequency")
+  purpose            String?
+  terms              String?            @db.Text
+  status             LoanStatus         @default(DRAFT)
+  totalRepayable     Decimal?           @map("total_repayable") @db.Decimal(12, 2)
+  integrityHash      String?            @map("integrity_hash")
+  agreementPdfId     String?            @map("agreement_pdf_id")
+  activatedAt        DateTime?          @map("activated_at")
+  completedAt        DateTime?          @map("completed_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  participants      LoanParticipant[]
+  repaymentSchedule RepaymentSchedule[]
+  signatures        DigitalSignature[]
+  documents         Document[]          @relation("LoanDocuments")
+  agreementPdf      Document?           @relation("AgreementPdf", fields: [agreementPdfId], references: [id])
+  auditLogs         AuditLog[]
+
+  @@index([status])
+  @@index([agreementNumber])
+  @@index([createdAt])
+  @@map("loan_agreements")
+}
+
+model LoanParticipant {
+  id        String          @id @default(uuid())
+  loanId    String          @map("loan_id")
+  userId    String          @map("user_id")
+  role      ParticipantRole
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  loan LoanAgreement @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id])
+
+  @@unique([loanId, userId])
+  @@unique([loanId, role])
+  @@index([userId])
+  @@map("loan_participants")
+}
+
+model RepaymentSchedule {
+  id                String            @id @default(uuid())
+  loanId            String            @map("loan_id")
+  installmentNumber Int               @map("installment_number")
+  amountDue         Decimal           @map("amount_due") @db.Decimal(12, 2)
+  principalPortion  Decimal           @map("principal_portion") @db.Decimal(12, 2)
+  interestPortion   Decimal           @map("interest_portion") @db.Decimal(12, 2)
+  dueDate           DateTime          @map("due_date")
+  status            InstallmentStatus @default(UPCOMING)
+  paidAmount        Decimal           @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  paidAt            DateTime?         @map("paid_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  loan         LoanAgreement          @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  transactions RepaymentTransaction[]
+
+  @@unique([loanId, installmentNumber])
+  @@index([dueDate])
+  @@index([status])
+  @@map("repayment_schedules")
+}
+
+model RepaymentTransaction {
+  id              String        @id @default(uuid())
+  scheduleId      String        @map("schedule_id")
+  amountPaid      Decimal       @map("amount_paid") @db.Decimal(12, 2)
+  paymentMethod   PaymentMethod @map("payment_method")
+  transactionRef  String?       @map("transaction_ref")
+  proofDocumentId String?       @map("proof_document_id")
+  notes           String?
+  paidAt          DateTime      @default(now()) @map("paid_at")
+  recordedBy      String        @map("recorded_by")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  schedule      RepaymentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  proofDocument Document?         @relation(fields: [proofDocumentId], references: [id])
+
+  @@index([scheduleId])
+  @@index([paidAt])
+  @@map("repayment_transactions")
+}
+
+model DigitalSignature {
+  id           String          @id @default(uuid())
+  loanId       String          @map("loan_id")
+  userId       String          @map("user_id")
+  otpHash      String?         @map("otp_hash")
+  otpExpiresAt DateTime?       @map("otp_expires_at")
+  status       SignatureStatus @default(OTP_SENT)
+  signedAt     DateTime?       @map("signed_at")
+  ipAddress    String?         @map("ip_address")
+  userAgent    String?         @map("user_agent")
+  signatureHash String?        @map("signature_hash")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  loan LoanAgreement @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id])
+
+  @@unique([loanId, userId])
+  @@index([status])
+  @@map("digital_signatures")
+}
+
+model Document {
+  id           String          @id @default(uuid())
+  fileName     String          @map("file_name")
+  originalName String          @map("original_name")
+  mimeType     String          @map("mime_type")
+  fileSize     Int             @map("file_size")
+  filePath     String          @map("file_path")
+  purpose      DocumentPurpose
+  uploadedBy   String          @map("uploaded_by")
+  loanId       String?         @map("loan_id")
+  checksum     String?
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  uploader        User                   @relation(fields: [uploadedBy], references: [id])
+  loan            LoanAgreement?         @relation("LoanDocuments", fields: [loanId], references: [id])
+  kycDocuments    KycVerification[]      @relation("KycDocument")
+  kycSelfies      KycVerification[]      @relation("KycSelfie")
+  agreementPdfs   LoanAgreement[]        @relation("AgreementPdf")
+  repaymentProofs RepaymentTransaction[]
+
+  @@index([uploadedBy])
+  @@index([purpose])
+  @@map("documents")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  entityType String      @map("entity_type")
+  entityId   String      @map("entity_id")
+  action     AuditAction
+  actorId    String?     @map("actor_id")
+  oldValues  Json?       @map("old_values")
+  newValues  Json?       @map("new_values")
+  ipAddress  String?     @map("ip_address")
+  userAgent  String?     @map("user_agent")
+  metadata   Json?
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  actor User?          @relation("AuditActor", fields: [actorId], references: [id])
+  loan  LoanAgreement? @relation(fields: [entityId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model WebhookEndpoint {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  url       String
+  events    WebhookEvent[]
+  secret    String
+  isActive  Boolean        @default(true) @map("is_active")
+  lastError String?        @map("last_error")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([userId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id           String       @id @default(uuid())
+  endpointId   String       @map("endpoint_id")
+  event        WebhookEvent
+  payload      Json
+  responseCode Int?         @map("response_code")
+  responseBody String?      @map("response_body")
+  attempts     Int          @default(0)
+  success      Boolean      @default(false)
+  deliveredAt  DateTime?    @map("delivered_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([event])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
