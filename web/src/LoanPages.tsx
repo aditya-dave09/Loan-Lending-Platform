@@ -29,6 +29,8 @@ import type {
   LoanDetails,
 } from "./api";
 
+import RepaymentPanel from "./RepaymentPanel";
+
 import AgreementActions from "./AgreementActions";
 
 // --------------------------------------
@@ -717,6 +719,7 @@ export function AgreementPage({
                 </div>
               </div>
             </section>
+
           </div>
 
             <AgreementActions
@@ -779,12 +782,20 @@ export function AgreementPage({
               </table>
             </div>
           </section>
+          
+      <RepaymentPanel
+        loan={loan}
+        session={session}
+        onChanged={() => {
+          setRefresh((previous) => previous + 1);
+        }}
+      />
 
           <p className="mt-6 text-sm text-slate-500">
-            Agreement confirmation is available for local testing.
-            Repayment recording will be integrated in the next milestone.
-            OTP confirmation is not a certified electronic signature.
-          </p>
+          LoanForge records agreement confirmations and
+          borrower-reported repayments. It does not transfer
+          money or independently verify payments.
+        </p>
         </>
       )}
     </LoanLayout>

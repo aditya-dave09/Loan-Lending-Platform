@@ -366,3 +366,81 @@ export function inr(value: number | string) {
     maximumFractionDigits: 2,
   }).format(Number(value));
 }
+
+export type PaymentMethod =
+  | "UPI"
+  | "BANK_TRANSFER"
+  | "CASH"
+  | "CHEQUE"
+  | "OTHER";
+
+export interface RepaymentTransaction {
+  id: string;
+  amountPaid: string;
+  paymentMethod: PaymentMethod;
+  transactionRef: string | null;
+  paidAt: string;
+}
+
+export interface RepaymentInstallment {
+  id: string;
+  installment: number;
+  amountDue: string;
+  principalPortion: string;
+  interestPortion: string;
+  dueDate: string;
+  status: string;
+  paidAmount: string;
+  transactions: RepaymentTransaction[];
+}
+
+export interface RepaymentData {
+  summary: {
+    totalRepayable: string;
+    totalPaid: string;
+    totalRemaining: string;
+    nextDueDate: string | null;
+    nextDueAmount: string | null;
+    overdueCount: number;
+  };
+  schedule: RepaymentInstallment[];
+}
+
+export interface RecordRepaymentInput {
+  amountPaid: number;
+  paymentMethod: PaymentMethod;
+  transactionRef: string;
+  notes: string;
+}
+
+export function getRepaymentSchedule(
+  token: string,
+  loanId: string
+) {
+  return apiRequest<RepaymentData>(
+    `/loans/${encodeURIComponent(loanId)}/repayments`,
+    { method: "GET" },
+    token
+  );
+}
+
+export function recordRepayment(
+  token: string,
+  scheduleId: string,
+  payment: RecordRepaymentInput
+) {
+  return apiRequest<{
+    transactionId: string;
+    installment: number;
+    amountPaid: number;
+    status: string;
+    remainingBalance: string;
+  }>(
+    `/repayments/${encodeURIComponent(scheduleId)}/pay`,
+    {
+      method: "POST",
+      body: JSON.stringify(payment),
+    },
+    token
+  );
+}
