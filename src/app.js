@@ -27,7 +27,10 @@ const notificationRoutes = require('./modules/notification/notification.routes')
 const webhookRoutes = require('./modules/webhook/webhook.routes');
 
 const app = express();
-
+// Trust one reverse proxy when deployed behind our hosting provider.
+if (config.env === 'production') {
+  app.set('trust proxy', 1);
+}
 // ─────────────────────────────────────────────
 // GLOBAL MIDDLEWARE (order matters!)
 // ─────────────────────────────────────────────

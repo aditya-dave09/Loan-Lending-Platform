@@ -54,4 +54,53 @@ const config = {
   },
 };
 
+
+/**
+ * Production environment safety checks.
+ * Prevent the API from starting with missing or
+ * insecure configuration.
+ */
+if (config.env === 'production') {
+  const requiredVariables = [
+    'DATABASE_URL',
+    'JWT_ACCESS_SECRET',
+    'JWT_REFRESH_SECRET',
+    'FRONTEND_URL',
+    'APP_URL',
+    'AI_API_KEY',
+    'AI_CHAT_COMPLETIONS_URL',
+    'AI_MODEL',
+  ];
+
+  const missing = requiredVariables.filter(
+    (name) => !process.env[name]?.trim()
+  );
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing production environment variables: ${missing.join(', ')}`
+    );
+  }
+
+  if (
+    config.jwt.accessSecret.length < 32 ||
+    config.jwt.refreshSecret.length < 32 ||
+    config.jwt.accessSecret === config.jwt.refreshSecret
+  ) {
+    throw new Error(
+      'Production JWT secrets must be distinct and at least 32 characters long'
+    );
+  }
+
+  if (
+    !config.appUrl.startsWith('https://') ||
+    !config.frontendUrl.startsWith('https://')
+  ) {
+    throw new Error(
+      'Production APP_URL and FRONTEND_URL must use HTTPS'
+    );
+  }
+}
+
 module.exports = config;
+
