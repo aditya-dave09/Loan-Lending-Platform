@@ -444,3 +444,23 @@ export function recordRepayment(
     token
   );
 }
+
+export interface LoanAIResponse {
+  answer: string;
+  model: string;
+}
+
+export function askLoanAI(
+  token: string,
+  loanId: string,
+  question: string
+) {
+  return apiRequest<LoanAIResponse>(
+    `/ai/loans/${encodeURIComponent(loanId)}/ask`,
+    {
+      method: "POST",
+      body: JSON.stringify({ question }),
+    },
+    token
+  );
+}

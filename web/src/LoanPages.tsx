@@ -1,4 +1,4 @@
-
+import LoanAI from "./LoanAI";
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
@@ -729,6 +729,12 @@ export function AgreementPage({
                 setRefresh((previous) => previous + 1);
               }}
             />
+            
+              <LoanAI
+                session={session}
+                loanId={loan.id}
+              />
+
 
           <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <div className="border-b border-slate-100 p-7">
