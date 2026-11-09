@@ -1,4 +1,5 @@
 import { usePersistentSession } from "./usePersistentSession";
+import SignupPage from "./SignupPage";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -110,7 +111,7 @@ function HomePage() {
 
           <div className="mt-9 flex flex-wrap gap-4">
             <Link
-              to="/login"
+              to="/signup"
               className="inline-flex items-center gap-3 rounded-xl bg-teal-600 px-7 py-4 font-semibold text-white hover:bg-teal-700"
             >
               Get started <ArrowRight size={19} />
@@ -311,7 +312,13 @@ function LoginPage({
           </form>
 
           <p className="mt-8 text-center text-sm text-slate-500">
-            Registration will be added in the next milestone.
+            New to LoanForge?{" "}
+            <Link
+              to="/signup"
+              className="font-semibold text-teal-700 hover:underline"
+            >
+              Create an account
+            </Link>
           </p>
         </div>
       </div>
@@ -571,6 +578,7 @@ function DashboardPage({
 // Application routes
 // -------------------------------
 
+
 export default function App() {
   const [session, setSession] = usePersistentSession();
 
@@ -578,8 +586,22 @@ export default function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
 
+      {/* New user registration */}
+      <Route
+        path="/signup"
+        element={
+          session ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <SignupPage onLogin={setSession} />
+          )
+        }
+      />
+
+      {/* Existing user login */}
       <Route
         path="/login"
+
         element={
           session ? (
             <Navigate to="/dashboard" replace />

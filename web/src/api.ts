@@ -479,3 +479,18 @@ export function refreshSession(refreshToken: string) {
     }
   );
 }
+
+export interface RegisterInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+export function registerUser(details: RegisterInput) {
+  return apiRequest<User>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(details),
+  });
+}
