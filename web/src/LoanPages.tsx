@@ -29,6 +29,8 @@ import type {
   LoanDetails,
 } from "./api";
 
+import AgreementActions from "./AgreementActions";
+
 // --------------------------------------
 // Shared layout
 // --------------------------------------
@@ -560,6 +562,7 @@ export function AgreementPage({
   const [loan, setLoan] = useState<LoanDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
     if (!loanId) {
@@ -590,7 +593,7 @@ export function AgreementPage({
     return () => {
       active = false;
     };
-  }, [session.accessToken, loanId]);
+  }, [session.accessToken, loanId, refresh]);
 
   const lender = loan?.participants.find(
     (p) => p.role === "LENDER"
@@ -716,6 +719,14 @@ export function AgreementPage({
             </section>
           </div>
 
+            <AgreementActions
+              loan={loan}
+              session={session}
+              onChanged={() => {
+                setRefresh((previous) => previous + 1);
+              }}
+            />
+
           <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <div className="border-b border-slate-100 p-7">
               <h2 className="text-xl font-bold">
@@ -770,9 +781,9 @@ export function AgreementPage({
           </section>
 
           <p className="mt-6 text-sm text-slate-500">
-            This is a draft agreement management system.
-            Signing and payment recording will be
-            integrated in the next milestone.
+            Agreement confirmation is available for local testing.
+            Repayment recording will be integrated in the next milestone.
+            OTP confirmation is not a certified electronic signature.
           </p>
         </>
       )}
