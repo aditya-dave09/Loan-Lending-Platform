@@ -1,4 +1,5 @@
-
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Sparkles, Send, ShieldAlert } from "lucide-react";
@@ -140,9 +141,54 @@ export default function LoanAI({
             <h3 className="mb-4 font-bold text-slate-900">
               LoanForge AI Response
             </h3>
-            <div className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700">
-              {answer}
-            </div>
+            
+        <div className="break-words text-sm leading-7 text-slate-700">
+        <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            skipHtml
+            components={{
+            h1: ({ children }) => (
+                <h3 className="mb-4 mt-6 text-xl font-bold text-slate-900">
+                {children}
+                </h3>
+            ),
+            h2: ({ children }) => (
+                <h4 className="mb-3 mt-6 text-lg font-bold text-slate-900">
+                {children}
+                </h4>
+            ),
+            h3: ({ children }) => (
+                <h5 className="mb-2 mt-4 font-bold text-slate-900">
+                {children}
+                </h5>
+            ),
+            p: ({ children }) => (
+                <p className="my-3">{children}</p>
+            ),
+            ul: ({ children }) => (
+                <ul className="my-3 list-disc space-y-1 pl-6">
+                {children}
+                </ul>
+            ),
+            ol: ({ children }) => (
+                <ol className="my-3 list-decimal space-y-1 pl-6">
+                {children}
+                </ol>
+            ),
+            li: ({ children }) => (
+                <li>{children}</li>
+            ),
+            strong: ({ children }) => (
+                <strong className="font-bold text-slate-900">
+                {children}
+                </strong>
+            ),
+            }}
+        >
+            {answer}
+        </ReactMarkdown>
+        </div>
+
           </div>
         )}
 

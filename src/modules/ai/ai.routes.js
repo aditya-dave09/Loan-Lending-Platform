@@ -78,14 +78,30 @@ async function callModel(messages) {
         temperature: 0.2,
         max_tokens: 700,
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(120000),
     });
-  } catch {
+  
+} catch (error) {
+  // Log technical details without exposing the API key.
+  console.error('BharatCode API connection failed:', {
+    name: error.name,
+    message: error.message,
+    code: error.cause?.code || 'UNKNOWN',
+  });
+
+  if (error.name === 'TimeoutError') {
     throw new ApiError(
-      502,
-      'The AI provider could not be reached.'
+      504,
+      'BharatCode took too long to respond. The model may be busy.'
     );
   }
+
+  throw new ApiError(
+    502,
+    'Unable to connect to BharatCode. Check the backend terminal for details.'
+  );
+}
+
 
   if (!response.ok) {
     throw new ApiError(
@@ -142,14 +158,28 @@ router.post(
       totalRepayable: String(loan.totalRepayable || ''),
       purpose: loan.purpose || '',
       additionalTerms: loan.terms || '',
-      repaymentSchedule: loan.repaymentSchedule.map(
-        (installment) => ({
-          number: installment.installmentNumber,
-          dueDate: installment.dueDate,
-          amountDue: String(installment.amountDue),
-          status: installment.status,
-        })
-      ),
+      
+repaymentSchedule: loan.repaymentSchedule.map(
+  (installment) => {
+    const amountDue = Number(installment.amountDue);
+    const paidAmount = Number(installment.paidAmount || 0);
+
+    const remainingAmount = Math.max(
+      0,
+      Math.round((amountDue - paidAmount) * 100) / 100
+    );
+
+    return {
+      number: installment.installmentNumber,
+      dueDate: installment.dueDate,
+      amountDue: amountDue.toFixed(2),
+      paidAmount: paidAmount.toFixed(2),
+      remainingAmount: remainingAmount.toFixed(2),
+      status: installment.status,
+    };
+  }
+),
+
     };
 
     const result = await callModel([
