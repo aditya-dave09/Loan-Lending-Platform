@@ -464,3 +464,18 @@ export function askLoanAI(
     token
   );
 }
+
+export interface RefreshedTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export function refreshSession(refreshToken: string) {
+  return apiRequest<RefreshedTokens>(
+    "/auth/refresh",
+    {
+      method: "POST",
+      body: JSON.stringify({ refreshToken }),
+    }
+  );
+}

@@ -1,4 +1,4 @@
-
+import { usePersistentSession } from "./usePersistentSession";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -572,7 +572,7 @@ function DashboardPage({
 // -------------------------------
 
 export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = usePersistentSession();
 
   return (
     <Routes>
@@ -646,3 +646,5 @@ export default function App() {
   CreateLoanPage,
   AgreementPage,
 } from "./LoanPages";
+
+
