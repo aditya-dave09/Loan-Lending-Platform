@@ -494,3 +494,23 @@ export function registerUser(details: RegisterInput) {
     body: JSON.stringify(details),
   });
 }
+
+export type KycStatus =
+  | "NOT_SUBMITTED"
+  | "PENDING"
+  | "VERIFIED"
+  | "REJECTED";
+
+export interface KycStatusResponse {
+  status: KycStatus;
+  documentType?: string;
+  rejectionReason?: string | null;
+}
+
+export function getKycStatus(token: string) {
+  return apiRequest<KycStatusResponse>(
+    "/kyc/status",
+    { method: "GET" },
+    token
+  );
+}

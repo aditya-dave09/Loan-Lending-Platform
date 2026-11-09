@@ -2,6 +2,7 @@ import { usePersistentSession } from "./usePersistentSession";
 import SignupPage from "./SignupPage";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import KycStatusPanel from "./KycStatusPanel";
 import {
   Link,
   Route,
@@ -262,7 +263,7 @@ function LoginPage({
           <p className="mt-3 text-slate-500">
             Sign in to your LoanForge account.
           </p>
-
+          
           <form onSubmit={handleSubmit} className="mt-10 space-y-6">
             <div>
               <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700">
@@ -420,6 +421,7 @@ function DashboardPage({
         <p className="mt-3 text-slate-500">
           Here's an overview of your lending activity.
         </p>
+        <KycStatusPanel token={session.accessToken} />
         
 
     <div className="mt-7 flex flex-wrap gap-3">
