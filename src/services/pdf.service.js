@@ -80,11 +80,11 @@ class PdfService {
       doc.fontSize(10).font('Helvetica');
 
       const terms = [
-        ['Principal Amount', `₹${parseFloat(loan.principalAmount).toLocaleString('en-IN')}`],
+        ['Principal Amount', `Rs.${parseFloat(loan.principalAmount).toLocaleString('en-IN')}`],
         ['Interest Rate', `${loan.interestRate}% per annum`],
         ['Tenure', `${loan.tenureMonths} months`],
         ['Repayment Frequency', loan.repaymentFrequency],
-        ['Total Repayable', `₹${parseFloat(loan.totalRepayable || 0).toLocaleString('en-IN')}`],
+        ['Total Repayable', `Rs.${parseFloat(loan.totalRepayable || 0).toLocaleString('en-IN')}`],
         ['Purpose', loan.purpose || 'Not specified'],
       ];
 
@@ -148,8 +148,18 @@ class PdfService {
       doc.moveDown(0.5);
 
       // QR Code
-      doc.image(qrBuffer, doc.x, doc.y, { width: 80, height: 80 });
-      doc.moveDown(6);
+      
+      doc.x = 50;
+      const qrY = doc.y;
+
+      doc.image(qrBuffer, 50, qrY, {
+        width: 80,
+        height: 80,
+      });
+
+      doc.x = 50;
+      doc.y = qrY + 95;
+
       doc.fontSize(7).text('Scan QR code to verify agreement authenticity', { align: 'left' });
 
       // ── Footer ──────────────────────────────
@@ -176,11 +186,20 @@ class PdfService {
 
   // ── Private Helpers ──────────────────────────
 
-  _drawDivider(doc) {
-    doc.strokeColor('#CCCCCC').lineWidth(0.5)
-      .moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-    doc.moveDown(0.5);
-  }
+  
+_drawDivider(doc) {
+  doc.x = 50;
+
+  doc.strokeColor('#CCCCCC')
+    .lineWidth(0.5)
+    .moveTo(50, doc.y)
+    .lineTo(545, doc.y)
+    .stroke();
+
+  doc.x = 50;
+  doc.moveDown(0.5);
+}
+
 
   _drawScheduleTable(doc, schedule) {
     const tableTop = doc.y;
@@ -209,9 +228,9 @@ class PdfService {
       }
 
       doc.text(String(item.installmentNumber), col.num, y);
-      doc.text(`₹${parseFloat(item.amountDue).toFixed(0)}`, col.amount, y);
-      doc.text(`₹${parseFloat(item.principalPortion).toFixed(0)}`, col.principal, y);
-      doc.text(`₹${parseFloat(item.interestPortion).toFixed(0)}`, col.interest, y);
+      doc.text(`Rs.${parseFloat(item.amountDue).toFixed(0)}`, col.amount, y);
+      doc.text(`Rs.${parseFloat(item.principalPortion).toFixed(0)}`, col.principal, y);
+      doc.text(`Rs.${parseFloat(item.interestPortion).toFixed(0)}`, col.interest, y);
       doc.text(new Date(item.dueDate).toLocaleDateString('en-IN'), col.date, y);
       doc.text(item.status, col.status, y);
 
