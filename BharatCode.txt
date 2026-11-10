@@ -1,0 +1,33 @@
+LoanForge - AI-Assisted Personal Lending Agreements
+
+Project: LoanForge
+Category: Work & Automation / Financial Documentation
+Public Demo: https://loanforge-demo.vercel.app/
+Source Code: https://github.com/aditya-dave09/Loan-Lending-Platform
+
+PROBLEM
+Informal personal loans between individuals can lead to unclear repayment terms, missing records, and misunderstandings about financial obligations. People need an accessible way to document what was agreed and review their commitments.
+
+SOLUTION
+LoanForge provides a web workflow for creating structured personal loan agreements, calculating repayment schedules, tracking reported installments, and reviewing agreement details. It combines a React frontend with a Node.js/Express API, Prisma ORM, and PostgreSQL.
+
+BHARATCODE AI HARNESS
+The agreement assistant integrates BharatCode's OpenAI-compatible chat-completions API with the Qwen model (qwen-3.8-27b). An authenticated agreement participant can request a plain-language review or ask a question. The backend builds a structured context from approved agreement fields such as principal, interest rate, tenure, additional terms, repayment schedule, and recorded payments. A system prompt instructs the model to explain obligations clearly, flag unspecified terms, avoid inventing fees or legal protections, and distinguish agreement facts from general considerations. Access checks and request rate limiting run before the model call. API credentials stay on the backend.
+
+DEMONSTRATED FEATURES
+- User signup, login, and session persistence
+- Personal lending dashboard and agreement management
+- Loan draft creation with interest and installment calculations
+- Repayment schedule and recorded-payment tracking
+- Agreement confirmation workflow and PDF generation implemented in the application
+- BharatCode AI agreement review and questions implemented and verified in local development
+
+DEPLOYMENT
+Frontend: Vercel
+Backend: Render
+PostgreSQL: Neon
+
+DEMO LIMITATIONS AND SAFETY
+This is a fictional-data hackathon prototype, not a lending, payment-processing, KYC, or legal-signature service. New accounts cannot create agreements without verification status. KYC status for designated fictional demonstration accounts is simulated; no real identity verification is implied. Production email-based signing is not yet configured. The hosted BharatCode model integration currently requires an API authentication fix (HTTP 401), although the model workflow has been tested locally. Repayment entries are records, not actual funds transfers. The app must undergo additional security, storage, and compliance work before handling real users or financial activity.
+
+No API keys, passwords, tokens, private identity details, or other secrets are included in this file.
