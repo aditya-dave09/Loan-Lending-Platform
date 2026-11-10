@@ -17,6 +17,7 @@ const authRoutes = require('./modules/auth/auth.routes');
 const userRoutes = require('./modules/user/user.routes');
 const kycRoutes = require('./modules/kyc/kyc.routes');
 const loanRoutes = require('./modules/loan/loan.routes');
+const aiRoutes = require('./modules/ai/ai.routes');
 const signatureRoutes = require('./modules/signature/signature.routes');
 const repaymentRoutes = require('./modules/repayment/repayment.routes');
 const documentRoutes = require('./modules/document/document.routes');
@@ -26,7 +27,10 @@ const notificationRoutes = require('./modules/notification/notification.routes')
 const webhookRoutes = require('./modules/webhook/webhook.routes');
 
 const app = express();
-
+// Trust one reverse proxy when deployed behind our hosting provider.
+if (config.env === 'production') {
+  app.set('trust proxy', 1);
+}
 // ─────────────────────────────────────────────
 // GLOBAL MIDDLEWARE (order matters!)
 // ─────────────────────────────────────────────
@@ -87,6 +91,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/kyc', kycRoutes);
 app.use('/api/v1/loans', loanRoutes);
+app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/loans', signatureRoutes);       // /loans/:id/sign/*
 app.use('/api/v1', repaymentRoutes);              // /loans/:id/repayments + /repayments/:id/pay
 app.use('/api/v1/documents', documentRoutes);
@@ -113,3 +118,5 @@ app.use((_req, _res, next) => {
 app.use(errorHandler);
 
 module.exports = app;
+
+
